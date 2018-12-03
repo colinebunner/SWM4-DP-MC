@@ -9,7 +9,7 @@ def init(rotate=False):
     for j in range(glb.ncell):
       yj = (j+0.5) * (glb.box_length/glb.ncell) 
       for k in range(glb.ncell):
-        zk = (k - 0.5) * (glb.box_length/glb.ncell)
+        zk = (k+0.5) * (glb.box_length/glb.ncell)
         if atm < glb.number_of_molecules:
 
           # Random displacements from regular lattice site to enhance equilibration

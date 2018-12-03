@@ -2,7 +2,7 @@ module energy
   implicit none
   private
   save
-  public :: energy_nonbond, energy_drude, energy_qreal, energy_qkspace, energy_qexclude
+  public :: energy_nonbond, energy_drude, energy_qreal, energy_qkspace, energy_qexclude, energy_qmimage
 
   real*8,parameter::N_Avogadro=6.02214129E23&
    ,k_B=1.3806488E-23
@@ -123,7 +123,6 @@ contains
 
             rij = sqrt(rxij*rxij + ryij*ryij + rzij*rzij)
 
-            ! I need to add conversion factor to get to Kelvin
             if (rij.lt.rcut) then
               eqreal = eqreal + (qbeads(iunit)*qbeads(junit)*erfc(kalp*rij))/rij
             end if
@@ -239,6 +238,55 @@ contains
     return
 
   end subroutine energy_qexclude
+  
+  ! Hedging my bets and coding a subroutine that just treats Coulomb
+  ! interactions with minimum image convention
+  subroutine energy_qmimage(nmol,nunit,boxlength,xcoords,ycoords,zcoords,qbeads,eqmimage)
+    integer,intent(in) :: nmol, nunit
+    real*8,intent(in)  :: xcoords(:,:), ycoords(:,:), zcoords(:,:), qbeads(5),&
+                         &boxlength
+    real*8,intent(out) :: eqmimage
 
+    integer :: imol, jmol, iunit, junit
+    real*8  :: rxi,ryi,rzi,rxij,ryij,rzij,rij
+
+    ! Set total real space energy to 0
+    eqmimage = 0.0d0
+
+    ! Loop over unique pairs of molecules
+    first_mol: do imol = 1, nmol-1
+      second_mol: do jmol = imol+1, nmol
+      
+        ! Subloop over interacting pairs of charges. All 5 beads charged in this
+        ! model. 
+        first_unit: do iunit = 1, 5
+
+          rxi = xcoords(imol,iunit)
+          ryi = ycoords(imol,iunit)
+          rzi = zcoords(imol,iunit)
+
+          second_unit: do junit = 1, 5
+
+            rxij = rxi - xcoords(jmol,junit)
+            ryij = ryi - ycoords(jmol,junit)
+            rzij = rzi - zcoords(jmol,junit)
+
+            rxij = rxij - boxlength*nint(rxij/boxlength)
+            ryij = ryij - boxlength*nint(ryij/boxlength)
+            rzij = rzij - boxlength*nint(rzij/boxlength)
+
+            rij = sqrt(rxij*rxij + ryij*ryij + rzij*rzij)
+
+            eqmimage = eqmimage + (qbeads(iunit)*qbeads(junit))/rij
+
+          end do second_unit
+        end do first_unit
+      end do second_mol
+    end do first_mol
+
+    eqmimage = eqmimage*qqfact
+
+    return
+  end subroutine energy_qmimage
 
 end module

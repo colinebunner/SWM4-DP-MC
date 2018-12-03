@@ -16,9 +16,9 @@ def rigid_rot_move():
   zstore = glb.zcoords
 
   # Rotate molecule around O atom
-  alp = np.random.random()*2.0e0*np.pi
-  bet = np.random.random()*2.0e0*np.pi
-  gam = np.random.random()*2.0e0*np.pi
+  alp = (np.random.random()-0.5e0)*glb.rot_max_displ
+  bet = (np.random.random()-0.5e0)*glb.rot_max_displ
+  gam = (np.random.random()-0.5e0)*glb.rot_max_displ
   ca = np.cos(alp)
   sa = np.sin(alp)
   cb = np.cos(bet)

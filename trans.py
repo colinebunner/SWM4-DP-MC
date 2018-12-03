@@ -25,7 +25,7 @@ def trans_move():
     glb.xcoords[trial_chain][i] += dx_nuc
     glb.ycoords[trial_chain][i] += dy_nuc
     glb.zcoords[trial_chain][i] += dz_nuc
- 
+  ''' 
   xcom = 0.0e0
   ycom = 0.0e0
   zcom = 0.0e0
@@ -40,29 +40,38 @@ def trans_move():
   xcom = xcom/18.01528
   ycom = ycom/18.01528
   zcom = zcom/18.01528
+  '''
+
+  # Try O coords right now
+  xcom = glb.xcoords[trial_chain][0]
+  ycom = glb.ycoords[trial_chain][0]
+  zcom = glb.zcoords[trial_chain][0]
 
   # Wrap if translation moves COM out of box in a direction. We won't let the
   # maximum translation get greater than half the box length, so we shouldn't
   # ever need to subtract more than boxlength from a coordinate.
-  wrapped_x= False
-  wrapped_y= False
-  wrapped_z= False
+  wrap_x_plus= False
+  wrap_x_minus= False
+  wrap_y_plus= False
+  wrap_y_minus= False
+  wrap_z_plus= False
+  wrap_z_minus= False
 
-  if xcom > glb.box_length:
-    wrapped_x= True
-    for i in range(5):
-      glb.xcoords[trial_chain][i] = glb.xcoords[trial_chain][i]-glb.box_length
-     
-  if ycom > glb.box_length:
-    wrapped_y= True
-    for i in range(5): 
-      glb.ycoords[trial_chain][i] = glb.ycoords[trial_chain][i]-glb.box_length
+  if xcom < 0.0e0:
+    wrap_x_plus= True
+  elif xcom > glb.box_length:
+    wrap_x_minus= True
 
-  if zcom > glb.box_length:
-    wrapped_z= True
-    for i in range(5): 
-      glb.zcoords[trial_chain][i] = glb.zcoords[trial_chain][i]-glb.box_length
+  if ycom < 0.0e0 :
+    wrap_y_plus= True
+  elif ycom > glb.box_length:
+    wrap_y_minus= True
 
+  if zcom < 0.0e0:
+    wrap_z_plus= True
+  elif zcom > glb.box_length:
+    wrap_z_minus= True
+  
   # Don't want to recompute energy of old configuration every electronic move. Just update
   # when the move is accepted.
   energy_elec = energy.sumup()
@@ -71,8 +80,6 @@ def trans_move():
   for em in range(glb.relec):
     trial_el = int(np.floor(np.random.random()*glb.number_of_molecules))
     # Electronic move will be simple cartesian displacement of Drude oscillators
-    # Don't worry about wrapping because it's so unlikely that only the Drude oscillator
-    # ends up outside of the box
     dx_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
     dy_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
     dz_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
@@ -95,6 +102,32 @@ def trans_move():
   # Accept composite move. Final energy_elec should be energy of system after all moves made.
   if np.random.random() < np.exp(-1.0e0*glb.beta*(energy_elec-energy_store)):
     glb.box_energy = energy_elec
+    # Wrap coordinates if trial move takes molecule outside of the box
+    if wrap_x_plus:
+      for iunit in range(5):
+        print(glb.xcoords[trial_chain][iunit])
+        glb.xcoords[trial_chain][iunit] += glb.box_length
+        print(glb.xcoords[trial_chain][iunit])
+    elif wrap_x_minus:
+      for iunit in range(5):
+        print(glb.xcoords[trial_chain][iunit])
+        glb.xcoords[trial_chain][iunit] -= glb.box_length
+        print(glb.xcoords[trial_chain][iunit])
+
+    if wrap_y_plus:
+      for iunit in range(5):
+        glb.ycoords[trial_chain][iunit] += glb.box_length
+    elif wrap_y_minus:
+      for iunit in range(5):
+        glb.ycoords[trial_chain][iunit] -= glb.box_length
+
+    if wrap_z_plus:
+      for iunit in range(5):
+        glb.zcoords[trial_chain][iunit] += glb.box_length
+    elif wrap_z_minus:
+      for iunit in range(5):
+        glb.zcoords[trial_chain][iunit] -= glb.box_length
+
   else:
     glb.xcoords = xstore
     glb.ycoords = ystore

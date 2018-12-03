@@ -36,24 +36,32 @@ def sumup():
   # Add tail correction (only O contributes to NB tail correction)
   sys_energy += glb.utailc
   
-  # Electrostatic energy (real + reciprocal - self - exclude)
-  qreal  = fenergy.energy.energy_qreal(glb.number_of_molecules,5,glb.box_length,glb.rcut,kalp,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
-  sys_energy += qreal
-  sys_energy -= qself
-  qrecip = fenergy.energy.energy_qkspace(glb.number_of_molecules,5,glb.box_length,kalp,nkvec,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
-  sys_energy += qrecip
-  qexclude = fenergy.energy.energy_qexclude(glb.number_of_molecules,5,kalp,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
-  sys_energy -= qexclude
+  if glb.qtype == "Ewald":
+    # Electrostatic energy (real + reciprocal - self - exclude)
+    qreal  = fenergy.energy.energy_qreal(glb.number_of_molecules,5,glb.box_length,glb.rcut,kalp,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
+    sys_energy += qreal
+    sys_energy -= qself
+    qrecip = fenergy.energy.energy_qkspace(glb.number_of_molecules,5,glb.box_length,kalp,nkvec,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
+    sys_energy += qrecip
+    qexclude = fenergy.energy.energy_qexclude(glb.number_of_molecules,5,kalp,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
+    sys_energy -= qexclude
+  else:
+    qmimage = fenergy.energy.energy_qmimage(glb.number_of_molecules,5,glb.box_length,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
+    sys_energy += qmimage
+
   '''
   print("NB: {:<18.4f}".format(enrg_nb))
   print("Drude: {:<18.4f}".format(enrg_drude))
-  print("qreal: {:<18.4f}".format(qreal))
-  print("qrecip: {:<18.4f}".format(qrecip))
-  print("qself: {:<18.4f}".format(qself))
-  print("qexclude: {:<18.4f}".format(qexclude))
-  print("qtot: {:<18.4f}".format(qreal+qrecip-qself-qexclude))
+  if glb.qtype == "Ewald":
+    print("qreal: {:<18.4f}".format(qreal))
+    print("qrecip: {:<18.4f}".format(qrecip))
+    print("qself: {:<18.4f}".format(qself))
+    print("qexclude: {:<18.4f}".format(qexclude))
+    print("qtot: {:<18.4f}".format(qreal+qrecip-qself-qexclude))
+  else:
+    print("qtot: {:<18.4f}".format(qmimage))
   print("---------------------------")
   print("Total: {:<18.4f}".format(sys_energy))
-  '''
+  ''' 
 
   return sys_energy

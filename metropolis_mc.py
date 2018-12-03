@@ -11,6 +11,7 @@ def main():
   else:
     init()
 
+  write_xyz("test.xyz")
   # Monte Carlo!
   for cycle in range(glb.number_of_cycles):
     for step in range(glb.number_of_molecules):

@@ -10,14 +10,14 @@ maxa = 0.1
 maxb = 0.1
 
 # How many electronic moves to attempt per nuclear move
-Relec = 50
+Relec = 10
 
 # How many simulation steps to perform
 Nequil = 0
-Nstep  = 200000
+Nstep  = 1000000
 icollect = 10
 
-nbins = 20
+nbins = 24
 
 def nuc_move(A,B):
 
@@ -124,11 +124,22 @@ if __name__ == "__main__":
   Abins = bin_prob_dist(distA,nbins)
   Adist, Aedges = np.histogram(distA,bins=nbins,density=True)
 
+  with open("dNp1dnp1.txt","w") as out:
+    out.write("#coord prob\n")
+    for i in range(len(Adist)):
+      out.write("{:<6.2f} {:<6.5f}\n".format(Abins[i],Adist[i]))
+
   # Theoretical Gaussian probability distribution for A in Born-Oppenheimer limit
   Abins_theor = np.arange(min(Abins),max(Abins),0.01)
   Adist_theor = (1.0e0/(np.sqrt(temp_tot*2.0e0*np.pi)))*np.exp((-1.0e0*(Abins_theor**2.0e0))/(2.0e0*temp_tot))
 
+  with open("theory.txt","w") as out:
+    out.write("#coord prob\n")
+    for i in range(len(Adist_theor)):
+      out.write("{:<6.2f} {:<6.5f}\n".format(Abins_theor[i],Adist_theor[i]))
+
   plt.plot(Abins,Adist,marker='o',mfc='white',linestyle='None')
   plt.plot(Abins_theor,Adist_theor,linestyle='-',color='black')
-  plt.show()
+  plt.savefig("out.png")
+#  plt.show()
   

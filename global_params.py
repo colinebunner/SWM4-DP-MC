@@ -1,16 +1,20 @@
 import numpy as np
 ### General simulation information ###
-number_of_molecules = 64
-ncell = 4
-number_of_cycles = 100
+number_of_molecules = 27
+ncell = 3
+number_of_cycles = 10000
 restart = False
 restart_file = "restart.inp"
 
 # Cutoff for nonbond interactions
-rcut = 7.00 # Angstrom
+rcut = 4.00 # Angstrom
 
 # Number of electronic moves for ANES-MC
-relec = 10
+relec = 100
+
+# Unfortunately, Ewald sum doesn't seem to be working, so the qmimage subroutine is hacky
+# way of getting some results
+qtype = "mimage"
 
 # Bead information
 nonbond_params = {101:[3.1589,93.2000,-1.77185],
@@ -48,9 +52,9 @@ trans_prob            = 0.500
 rot_prob              = 1.000
 
 ### Max displacement stuff ###
-trans_max_displ   = 2.0  # Angstrom
+trans_max_displ   = 0.4  # Angstrom
 rot_max_displ     = 0.7  # Radians
-drude_max_displ   = 0.05 # Angstrom
+drude_max_displ   = 0.04 # Angstrom
 
 ### Information on each chain/unit ###
 xcoords  = np.empty((number_of_molecules,5)) # 1st index is the molecule number, 
@@ -60,9 +64,9 @@ zcoords  = np.empty((number_of_molecules,5))
 
 ### Box info ###
 # Cartesian boxlength in Angstrom (box is assumed cubic)
-box_length = 14.420
+box_length = 8.000
 # Temperature and reciprocal temperature in K and K^-1
-temperature = 290
+temperature = 673
 beta = 1.0e0/temperature
 
 # Electronic temperature
@@ -73,7 +77,7 @@ beta_elec = np.float64(1.0e0/temp_elec)
 box_energy = 0.0e0
 
 # Drude oscillator is tethered to the oxygen atom, which is bead 1, by a spring with the following force constant
-kdrude = 503220.0 # K/A^2
+kdrude = 50322000.0 #503220.0 # K/A^2
 qdrude = 1.77185  # units of e-1
 
 # Tail correction to energy (only O has LJ params, so is only contributor to nonbonded tail correction)
