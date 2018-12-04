@@ -50,7 +50,14 @@ def init(rotate=False):
           atm = atm + 1
 
 def read_restart():
-  pass
+  with open(glb.restart_file,"r") as inp:
+    f = [line.strip().replace("\n","") for line in inp.readlines()]
+    for imol in range(glb.number_of_molecules):
+      for iunit in range(5):
+        cl = f[2+imol*5+iunit].split()
+        glb.xcoords[imol][iunit] = float(cl[1])
+        glb.ycoords[imol][iunit] = float(cl[2])
+        glb.zcoords[imol][iunit] = float(cl[3])
 
 def write_xyz(fn):
 

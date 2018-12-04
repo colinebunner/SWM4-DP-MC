@@ -7,21 +7,21 @@ from trans import trans_move
 def main():
 
   if glb.restart:
-    read_restart(glb.restart_file)
+    read_restart()
   else:
     init()
 
   write_xyz("test.xyz")
-  # Monte Carlo!
-  for cycle in range(glb.number_of_cycles):
-    for step in range(glb.number_of_molecules):
-      # Pick what kind of move to perform
-      move = np.random.random()
-      if move < glb.trans_prob:
-        trans_move()
-      else:
-        rigid_rot_move()
-    write_xyz("test.xyz")
+#  # Monte Carlo!
+#  for cycle in range(glb.number_of_cycles):
+#    for step in range(glb.number_of_molecules):
+#      # Pick what kind of move to perform
+#      move = np.random.random()
+#      if move < glb.trans_prob:
+#        trans_move()
+#      else:
+#        rigid_rot_move()
+#    write_xyz("test.xyz")
 
 main()
 

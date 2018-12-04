@@ -2,9 +2,9 @@ import numpy as np
 ### General simulation information ###
 number_of_molecules = 64
 ncell = 4
-number_of_cycles = 1000
-restart = False
-restart_file = "restart.inp"
+number_of_cycles = 10
+restart = True
+restart_file = "restart.xyz"
 
 # Cutoff for nonbond interactions
 rcut = 6.00 # Angstrom
