@@ -1,16 +1,16 @@
 import numpy as np
 ### General simulation information ###
-number_of_molecules = 27
-ncell = 3
-number_of_cycles = 10000
+number_of_molecules = 64
+ncell = 4
+number_of_cycles = 1000
 restart = False
 restart_file = "restart.inp"
 
 # Cutoff for nonbond interactions
-rcut = 4.00 # Angstrom
+rcut = 6.00 # Angstrom
 
 # Number of electronic moves for ANES-MC
-relec = 100
+relec = 20
 
 # Unfortunately, Ewald sum doesn't seem to be working, so the qmimage subroutine is hacky
 # way of getting some results
@@ -64,7 +64,7 @@ zcoords  = np.empty((number_of_molecules,5))
 
 ### Box info ###
 # Cartesian boxlength in Angstrom (box is assumed cubic)
-box_length = 8.000
+box_length = 14.420
 # Temperature and reciprocal temperature in K and K^-1
 temperature = 673
 beta = 1.0e0/temperature
@@ -77,7 +77,7 @@ beta_elec = np.float64(1.0e0/temp_elec)
 box_energy = 0.0e0
 
 # Drude oscillator is tethered to the oxygen atom, which is bead 1, by a spring with the following force constant
-kdrude = 50322000.0 #503220.0 # K/A^2
+kdrude = 503220.0 # K/A^2
 qdrude = 1.77185  # units of e-1
 
 # Tail correction to energy (only O has LJ params, so is only contributor to nonbonded tail correction)

@@ -50,7 +50,7 @@ contains
           ! Non-bonded energy (no Coulomb)
           sigr2 = (sig*sig)/r2
           sigr6 = sigr2*sigr2*sigr2
-          enb   = enb + 4*eps*sigr6*(sigr6-1.0d0)
+          enb   = enb + 4.0d0*eps*sigr6*(sigr6-1.0d0)
         end if
       end do second_mol
     end do first_mol
@@ -59,8 +59,9 @@ contains
 
   end subroutine energy_nonbond
 
-  subroutine energy_drude(nmol,nunit,xcoords,ycoords,zcoords,kdrude,edrude)
+  subroutine energy_drude(nmol,nunit,lrestrain,xcoords,ycoords,zcoords,kdrude,edrude)
     integer,intent(in) :: nmol, nunit
+    logical,intent(in) :: lrestrain
     real*8,intent(in)  :: xcoords(:,:), ycoords(:,:), zcoords(:,:), kdrude
     real*8,intent(out) :: edrude
 
@@ -79,6 +80,12 @@ contains
       r2 = rxij*rxij + ryij*ryij + rzij*rzij
 
       edrude = edrude + 0.5d0*kdrude*r2
+
+      ! Optional restraining terms. Quartic and sextic terms with force
+      ! constants 10.0 and 100.0 times larger, respectively.
+      if (lrestrain) then
+        edrude = edrude + 5.0d0*kdrude*r2*r2 + 50.0d0*kdrude*r2*r2*r2
+      end if
 
     end do molecules
 

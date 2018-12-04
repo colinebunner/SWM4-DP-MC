@@ -43,9 +43,9 @@ def init(rotate=False):
 
 
           # Random displacement of Drude particle so Ewald sum doesn't break at beginning
-          glb.xcoords[atm][4] += (np.random.random()-0.5e0)*0.04
-          glb.ycoords[atm][4] += (np.random.random()-0.5e0)*0.04
-          glb.zcoords[atm][4] += (np.random.random()-0.5e0)*0.04
+          glb.xcoords[atm][4] += (np.random.random()-0.5e0)*0.01
+          glb.ycoords[atm][4] += (np.random.random()-0.5e0)*0.01
+          glb.zcoords[atm][4] += (np.random.random()-0.5e0)*0.01
 
           atm = atm + 1
 

@@ -26,11 +26,9 @@ def sumup():
   # Subroutine calculates Drude oscillator harmonic spring energy and nonbonded energy up to rcut
   enrg_nb = fenergy.energy.energy_nonbond(glb.number_of_molecules,5,glb.rcut,glb.box_length,glb.xcoords,
                      glb.ycoords,glb.zcoords,glb.nbpar_fort[0][0],glb.nbpar_fort[0][1])
- 
   sys_energy += enrg_nb
 
-  enrg_drude = fenergy.energy.energy_drude(glb.number_of_molecules,5,glb.xcoords,glb.ycoords,glb.zcoords,glb.kdrude)
-  
+  enrg_drude = fenergy.energy.energy_drude(glb.number_of_molecules,5,True,glb.xcoords,glb.ycoords,glb.zcoords,glb.kdrude)
   sys_energy += enrg_drude
 
   # Add tail correction (only O contributes to NB tail correction)
