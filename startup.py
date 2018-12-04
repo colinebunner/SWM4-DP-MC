@@ -59,9 +59,14 @@ def read_restart():
         glb.ycoords[imol][iunit] = float(cl[2])
         glb.zcoords[imol][iunit] = float(cl[3])
 
-def write_xyz(fn):
+def write_xyz(fn,overwrite=False):
 
-  with open(fn,"a+") as out:
+  if overwrite:
+    code = "w"
+  else:
+    code = "a+"
+
+  with open(fn,code) as out:
     out.write("{:<8d}\n".format(5*glb.number_of_molecules))
     out.write("\n")
     for imol in range(glb.number_of_molecules):

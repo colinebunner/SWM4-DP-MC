@@ -2,19 +2,22 @@ import numpy as np
 ### General simulation information ###
 number_of_molecules = 64
 ncell = 4
-number_of_cycles = 10
-restart = True
+number_of_cycles = 2000
+restart = False
 restart_file = "restart.xyz"
+continue_run = False
 
 # Cutoff for nonbond interactions
 rcut = 6.00 # Angstrom
 
 # Number of electronic moves for ANES-MC
-relec = 20
+relec = 128
 
 # Unfortunately, Ewald sum doesn't seem to be working, so the qmimage subroutine is hacky
 # way of getting some results
 qtype = "mimage"
+
+iwrite = 50
 
 # Bead information
 nonbond_params = {101:[3.1589,93.2000,-1.77185],
@@ -52,7 +55,7 @@ trans_prob            = 0.500
 rot_prob              = 1.000
 
 ### Max displacement stuff ###
-trans_max_displ   = 0.4  # Angstrom
+trans_max_displ   = 0.5  # Angstrom
 rot_max_displ     = 0.7  # Radians
 drude_max_displ   = 0.04 # Angstrom
 
@@ -66,11 +69,11 @@ zcoords  = np.empty((number_of_molecules,5))
 # Cartesian boxlength in Angstrom (box is assumed cubic)
 box_length = 14.420
 # Temperature and reciprocal temperature in K and K^-1
-temperature = 673
+temperature = 12730
 beta = 1.0e0/temperature
 
 # Electronic temperature
-temp_elec = 5.0e0 # K
+temp_elec = 1.0e0 # K
 beta_elec = np.float64(1.0e0/temp_elec)
 
 # Total energy of simulation box

@@ -11,9 +11,9 @@ def rigid_rot_move():
   trial_chain = int(np.floor(np.random.random()*glb.number_of_molecules))
 
   # Store original configuration
-  xstore = glb.xcoords
-  ystore = glb.ycoords
-  zstore = glb.zcoords
+  xstore = np.copy(glb.xcoords)
+  ystore = np.copy(glb.ycoords)
+  zstore = np.copy(glb.zcoords)
 
   # Rotate molecule around O atom
   alp = (np.random.random()-0.5e0)*glb.rot_max_displ
@@ -42,39 +42,56 @@ def rigid_rot_move():
 
   # Don't want to recompute energy of old configuration every electronic move. Just update
   # when the move is accepted.
-  energy_elec = energy.sumup()
+  energy_elec, loverlap = energy.sumup()
 
-  # Relec electronic moves. Pick a random drude oscillator to move.
-  for em in range(glb.relec):
-    trial_el = int(np.floor(np.random.random()*glb.number_of_molecules))
-
-    # Electronic move will be simple cartesian displacement of Drude oscillators
-    # Don't worry about wrapping because it's so unlikely that only the Drude oscillator
-    # ends up outside of the box
-    dx_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
-    dy_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
-    dz_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
-
-    glb.xcoords[trial_chain][4] += dx_elec
-    glb.ycoords[trial_chain][4] += dy_elec
-    glb.zcoords[trial_chain][4] += dz_elec
-
-    energy_new = energy.sumup()
-
-    # Accept electronic move
-    if np.random.random() < np.exp(-1.0*glb.beta_elec*(energy_new-energy_elec)):
-      energy_elec = energy_new
-    # Reject electronic move
-    else:
-      glb.xcoords[trial_chain][4] -= dx_elec
-      glb.ycoords[trial_chain][4] -= dy_elec
-      glb.zcoords[trial_chain][4] -= dz_elec
-
-  # Accept composite move. Final energy_elec should be energy of system after all moves made.
-  if np.random.random() < np.exp(-1.0e0*glb.beta*(energy_elec-energy_store)):
-    glb.box_energy = energy_elec
-  else:
+  if loverlap:
     glb.xcoords = xstore
     glb.ycoords = ystore
     glb.zcoords = zstore
+
+  else:
+    # Relec electronic moves. Pick a random drude oscillator to move.
+    for em in range(glb.relec):
+      trial_el = int(np.floor(np.random.random()*glb.number_of_molecules))
+
+      # Electronic move will be simple cartesian displacement of Drude oscillators
+      # Don't worry about wrapping because it's so unlikely that only the Drude oscillator
+      # ends up outside of the box
+      dx_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
+      dy_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
+      dz_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
+
+      glb.xcoords[trial_chain][4] += dx_elec
+      glb.ycoords[trial_chain][4] += dy_elec
+      glb.zcoords[trial_chain][4] += dz_elec
+
+      xd = glb.xcoords[trial_chain][4] - glb.xcoords[trial_chain][0]
+      yd = glb.ycoords[trial_chain][4] - glb.ycoords[trial_chain][0]
+      zd = glb.zcoords[trial_chain][4] - glb.zcoords[trial_chain][0]
+      drudeDist = xd*xd + yd*yd + zd*zd
+
+      if drudeDist > 0.04e0:
+        glb.xcoords[trial_chain][4] -= dx_elec
+        glb.ycoords[trial_chain][4] -= dy_elec
+        glb.zcoords[trial_chain][4] -= dz_elec
+
+      else:
+        energy_new, loverlap = energy.sumup()
+  
+        # Accept electronic move
+        if np.random.random() < np.exp(-1.0*glb.beta_elec*(energy_new-energy_elec)):
+          energy_elec = energy_new
+        # Reject electronic move
+        else:
+          glb.xcoords[trial_chain][4] -= dx_elec
+          glb.ycoords[trial_chain][4] -= dy_elec
+          glb.zcoords[trial_chain][4] -= dz_elec
+
+    # Accept composite move. Final energy_elec should be energy of system after all moves made.
+    if np.random.random() < np.exp(-1.0e0*glb.beta*(energy_elec-energy_store)):
+      glb.box_energy = energy_elec
+    else:
+      glb.xcoords = xstore
+      glb.ycoords = ystore
+      glb.zcoords = zstore
 

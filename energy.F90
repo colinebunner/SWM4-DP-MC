@@ -84,7 +84,7 @@ contains
       ! Optional restraining terms. Quartic and sextic terms with force
       ! constants 10.0 and 100.0 times larger, respectively.
       if (lrestrain) then
-        edrude = edrude + 5.0d0*kdrude*r2*r2 + 50.0d0*kdrude*r2*r2*r2
+        edrude = edrude + 500.0d0*kdrude*r2*r2 + 5000.0d0*kdrude*r2*r2*r2
       end if
 
     end do molecules
@@ -94,17 +94,20 @@ contains
   end subroutine energy_drude
 
   ! Computes real-space portion of Coulomb energy
-  subroutine energy_qreal(nmol,nunit,boxlength,rcut,kalp,xcoords,ycoords,zcoords,qbeads,eqreal)
+  subroutine energy_qreal(nmol,nunit,boxlength,rcut,kalp,xcoords,ycoords,zcoords,qbeads,eqreal,lovr)
     integer,intent(in) :: nmol, nunit
     real*8,intent(in)  :: xcoords(:,:), ycoords(:,:), zcoords(:,:), qbeads(5),&
                          &boxlength,kalp,rcut
     real*8,intent(out) :: eqreal
+    logical,intent(out) :: lovr
 
     integer :: imol, jmol, iunit, junit
     real*8  :: rxi,ryi,rzi,rxij,ryij,rzij,rij
 
     ! Set total real space energy to 0
     eqreal = 0.0d0
+
+    lovr = .false.
 
     ! Loop over unique pairs of molecules
     first_mol: do imol = 1, nmol-1
@@ -129,6 +132,11 @@ contains
             rzij = rzij - boxlength*nint(rzij/boxlength)
 
             rij = sqrt(rxij*rxij + ryij*ryij + rzij*rzij)
+
+            if (rij.lt.1.2e0) then
+              lovr = .true.
+              return
+            end if
 
             if (rij.lt.rcut) then
               eqreal = eqreal + (qbeads(iunit)*qbeads(junit)*erfc(kalp*rij))/rij
@@ -248,17 +256,22 @@ contains
   
   ! Hedging my bets and coding a subroutine that just treats Coulomb
   ! interactions with minimum image convention
-  subroutine energy_qmimage(nmol,nunit,boxlength,xcoords,ycoords,zcoords,qbeads,eqmimage)
-    integer,intent(in) :: nmol, nunit
-    real*8,intent(in)  :: xcoords(:,:), ycoords(:,:), zcoords(:,:), qbeads(5),&
+  subroutine energy_qmimage(nmol,nunit,boxlength,xcoords,ycoords,zcoords,qbeads,eqmimage,lovr)
+    integer,intent(in)  :: nmol, nunit
+    real*8,intent(in)   :: xcoords(:,:), ycoords(:,:), zcoords(:,:), qbeads(5),&
                          &boxlength
-    real*8,intent(out) :: eqmimage
+    real*8,intent(out)  :: eqmimage
+    logical,intent(out) :: lovr
 
     integer :: imol, jmol, iunit, junit
     real*8  :: rxi,ryi,rzi,rxij,ryij,rzij,rij
 
     ! Set total real space energy to 0
     eqmimage = 0.0d0
+
+    ! Since all beads have charges, we can use this subroutine to implement
+    ! hard-cutoff on moves
+    lovr = .false.
 
     ! Loop over unique pairs of molecules
     first_mol: do imol = 1, nmol-1
@@ -283,6 +296,11 @@ contains
             rzij = rzij - boxlength*nint(rzij/boxlength)
 
             rij = sqrt(rxij*rxij + ryij*ryij + rzij*rzij)
+
+            if (rij.lt.1.2) then
+              lovr = .true.
+              return
+            end if
 
             eqmimage = eqmimage + (qbeads(iunit)*qbeads(junit))/rij
 
