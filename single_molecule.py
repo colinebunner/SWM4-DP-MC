@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 # E-field strength (V/A)
 efield = np.array([0.0e0,0.0e0,0.0e0])
 
-steps = 50000
-Relec = 10
+steps = 1000000
+Relec = 100
 istore_dipole = 20
 
 # Allow rotation, or just check that oscillator stays at value of 0 [rot=False]
@@ -17,10 +17,11 @@ rot = False
 # eA to Debye conversion (1 D = 0.20819434 eA)
 dconv = 1.0e0/0.20819434e0
 
-# eV to K conversion (1 eV = 11600 K) 
+# eV to K conversion (1 eV = 11600 K)
 uconv = 11600.0e0
 
-drude_max_displ = 0.04
+drude_max_displ = 0.04 # A
+rot_max_displ   = 0.8  # rad
 
 telec     = 1.0e0
 ttot      = 298.15e0
@@ -45,7 +46,7 @@ def energy_extfield(mol):
   uy = dipy*efield[1]
   uz = dipz*efield[2]
   energy += (ux+uy+uz)*uconv
-  
+
   return energy
 
 def calc_dipole(mol):
@@ -81,12 +82,15 @@ def bin_prob_dist(dist,nbins):
     ibin = int((el-minval)//bin_width)
     binned_dist[ibin] += 1
 
+  vol = np.sum([bin_width*count for count in binned_dist])
+  binned_dist *= (1.0e0/vol)
+
   return rbins, binned_dist
 
 
 if __name__ == "__main__":
 
-  # Make SWM4-DP molecule, calculate initial energy 
+  # Make SWM4-DP molecule, calculate initial energy
   # Molecule is initially in x-y plane, dipole moment along
   # positive y axis
   test_mol = np.copy(glb.swm4dp_geom)
@@ -105,9 +109,9 @@ if __name__ == "__main__":
       geosave = np.copy(test_mol)
 
       # Rotate molecule around O atom
-      alp = (np.random.random()-0.5e0)*glb.rot_max_displ
-      bet = (np.random.random()-0.5e0)*glb.rot_max_displ
-      gam = (np.random.random()-0.5e0)*glb.rot_max_displ
+      alp = (np.random.random()-0.5e0)*rot_max_displ
+      bet = (np.random.random()-0.5e0)*rot_max_displ
+      gam = (np.random.random()-0.5e0)*rot_max_displ
       ca = np.cos(alp)
       sa = np.sin(alp)
       cb = np.cos(bet)
@@ -125,24 +129,24 @@ if __name__ == "__main__":
         yu = test_mol[iunit][1] - yo
         zu = test_mol[iunit][2] - zo
         #Rotate and add position of O atom to coordinate
-        glb.xcoords[trial_chain][iunit] = cg*(cb*xu+sa*sb*yu-ca*sb*zu) + sg*(ca*yu+sa*zu) + xo
-        glb.ycoords[trial_chain][iunit] = sg*(-1.0e0*cb*xu-sa*sb*yu+sb*ca*zu) + cg*(ca*yu+sa*zu) + yo
-        glb.zcoords[trial_chain][iunit] = sb*xu - sa*cb*yu + ca*cb*zu + zo
-  
+        test_mol[iunit][0] = cg*(cb*xu+sa*sb*yu-ca*sb*zu) + sg*(ca*yu+sa*zu) + xo
+        test_mol[iunit][1] = sg*(-1.0e0*cb*xu-sa*sb*yu+sb*ca*zu) + cg*(ca*yu+sa*zu) + yo
+        test_mol[iunit][2] = sb*xu - sa*cb*yu + ca*cb*zu + zo
+
       energy_elec = energy_extfield(test_mol)
-  
+
       # Relec electronic moves. Pick a random drude oscillator to move.
       for em in range(Relec):
         dx_elec = (np.random.random()-0.5e0)*drude_max_displ
         dy_elec = (np.random.random()-0.5e0)*drude_max_displ
         dz_elec = (np.random.random()-0.5e0)*drude_max_displ
-  
+
         test_mol[4][0] += dx_elec
         test_mol[4][1] += dy_elec
         test_mol[4][2] += dz_elec
-  
-        energy_new = energy_extfield(test_mol) 
-  
+
+        energy_new = energy_extfield(test_mol)
+
         # Accept electronic move
         if np.random.random() < np.exp(-1.0*beta_elec*(energy_new-energy_elec)):
           energy_elec = energy_new
@@ -151,30 +155,30 @@ if __name__ == "__main__":
           test_mol[4][0] -= dx_elec
           test_mol[4][1] -= dy_elec
           test_mol[4][2] -= dz_elec
-  
+
       # Accept composite move. Final energy_elec should be energy of system after all moves made.
       if np.random.random() < np.exp(-1.0e0*beta*(energy_elec-energy_store)):
         energy_old = energy_elec
       else:
-        test_mol = geosave 
-  
+        test_mol = geosave
+
     # Non-rotation case for calculating polarizability or just testing implementation
     else:
 
       geosave = np.copy(test_mol)
-  
+
       energy_old = energy_extfield(geosave)
-  
+
       dx_elec = (np.random.random()-0.5e0)*drude_max_displ
       dy_elec = (np.random.random()-0.5e0)*drude_max_displ
       dz_elec = (np.random.random()-0.5e0)*drude_max_displ
-  
+
       test_mol[4][0] += dx_elec
       test_mol[4][1] += dy_elec
       test_mol[4][2] += dz_elec
-  
-      energy_new = energy_extfield(test_mol) 
-  
+
+      energy_new = energy_extfield(test_mol)
+
       # Accept electronic move
       if np.random.random() < np.exp(-1.0*beta_elec*(energy_new-energy_old)):
         energy_old = energy_new
@@ -192,6 +196,11 @@ if __name__ == "__main__":
       dipole_z.append(dipz)
 
   dipole_tot = np.array(dipole_tot)*dconv
-  dtotBins, dtotDist = bin_prob_dist(dipole_tot,20)
+  dtotBins, dtotDist = bin_prob_dist(dipole_tot,24)
+
+  with open("zero-field.dat","w") as out:
+    for i in range(len(dtotBins)):
+      out.write("{:<8.4f} {:<8.7f}\n".format(dtotBins[i],dtotDist[i]))
+
   plt.plot(dtotBins,dtotDist)
   plt.show()

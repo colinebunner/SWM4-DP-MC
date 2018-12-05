@@ -10,12 +10,13 @@ module energy
   real*8,parameter::e_unit=1.602176565E-19&
    ,eps_0=8.854187817E-12&
    ,eXV_to_K=e_unit/k_B& !< e times V to Kelvin
-   ,qqfact=(e_unit**2)*1E10/3.1415926535897932*4.0d0/eps_0/k_B !< conversion factor for coulomb interactions (including e-->C, m-->Ang, fourpi*epsilon_0, J-->K)
+   ,qqfact=(e_unit**2)*1E10/(3.1415926535897932*4.0d0)/eps_0/k_B !< conversion factor for coulomb interactions (including e-->C, m-->Ang, fourpi*epsilon_0, J-->K)
 
 contains
 
-  subroutine energy_nonbond(nmol,nunit,rcut,boxlength,xcoords,ycoords,zcoords,sig,eps,enb)
+  subroutine energy_nonbond(nmol,nunit,rcut,boxlength,lpbc,xcoords,ycoords,zcoords,sig,eps,enb)
     integer,intent(in) :: nmol, nunit
+    logical,intent(in) :: lpbc
     real*8,intent(in)  :: rcut, xcoords(:,:), ycoords(:,:), zcoords(:,:),boxlength,sig,eps
     real*8,intent(out) :: enb
 
@@ -39,11 +40,11 @@ contains
         rxij = rxi - xcoords(jmol,1)
         ryij = ryi - ycoords(jmol,1)
         rzij = rzi - zcoords(jmol,1)
-
-        rxij = rxij - boxlength*nint(rxij/boxlength)
-        ryij = ryij - boxlength*nint(ryij/boxlength)
-        rzij = rzij - boxlength*nint(rzij/boxlength)
-
+        if (lpbc) then
+          rxij = rxij - boxlength*nint(rxij/boxlength)
+          ryij = ryij - boxlength*nint(ryij/boxlength)
+          rzij = rzij - boxlength*nint(rzij/boxlength)
+        end if
         r2 = rxij*rxij + ryij*ryij + rzij*rzij
 
         if (r2.lt.rc2) then
@@ -256,8 +257,9 @@ contains
   
   ! Hedging my bets and coding a subroutine that just treats Coulomb
   ! interactions with minimum image convention
-  subroutine energy_qmimage(nmol,nunit,boxlength,xcoords,ycoords,zcoords,qbeads,eqmimage,lovr)
+  subroutine energy_qmimage(nmol,nunit,boxlength,lpbc,xcoords,ycoords,zcoords,qbeads,eqmimage,lovr)
     integer,intent(in)  :: nmol, nunit
+    logical,intent(in)  :: lpbc
     real*8,intent(in)   :: xcoords(:,:), ycoords(:,:), zcoords(:,:), qbeads(5),&
                          &boxlength
     real*8,intent(out)  :: eqmimage
@@ -290,11 +292,11 @@ contains
             rxij = rxi - xcoords(jmol,junit)
             ryij = ryi - ycoords(jmol,junit)
             rzij = rzi - zcoords(jmol,junit)
-
-            rxij = rxij - boxlength*nint(rxij/boxlength)
-            ryij = ryij - boxlength*nint(ryij/boxlength)
-            rzij = rzij - boxlength*nint(rzij/boxlength)
-
+            if (lpbc) then
+              rxij = rxij - boxlength*nint(rxij/boxlength)
+              ryij = ryij - boxlength*nint(ryij/boxlength)
+              rzij = rzij - boxlength*nint(rzij/boxlength)
+            end if
             rij = sqrt(rxij*rxij + ryij*ryij + rzij*rzij)
 
             if (rij.lt.1.2) then

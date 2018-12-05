@@ -16,7 +16,7 @@ def main():
   glb.box_energy,loverlap = sumup()
 
   # Decide whether to continue run or overwrite
-  write_xyz("run.xyz",(not glb.continue_run))
+  write_xyz("dimer.xyz",(not glb.continue_run))
   # Monte Carlo!
   for cycle in range(glb.number_of_cycles):
     for step in range(glb.number_of_molecules):
@@ -27,7 +27,7 @@ def main():
       else:
         rigid_rot_move()
     if cycle%glb.iwrite == 0:
-      write_xyz("run.xyz",False)
+      write_xyz("dimer.xyz",False)
 
   # Overwrite last restart file
   write_xyz("restart.xyz",True)

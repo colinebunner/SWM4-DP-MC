@@ -35,7 +35,7 @@ def sumup():
       qexclude = fenergy.energy.energy_qexclude(glb.number_of_molecules,5,kalp,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
       sys_energy -= qexclude
   else:
-    qmimage,loverlap = fenergy.energy.energy_qmimage(glb.number_of_molecules,5,glb.box_length,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
+    qmimage,loverlap = fenergy.energy.energy_qmimage(glb.number_of_molecules,5,glb.box_length,glb.lpbc,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
     sys_energy += qmimage
 
   # Kill move for overlap
@@ -43,7 +43,7 @@ def sumup():
     return sys_energy, True
 
   # Subroutine calculates Drude oscillator harmonic spring energy and nonbonded energy up to rcut
-  enrg_nb = fenergy.energy.energy_nonbond(glb.number_of_molecules,5,glb.rcut,glb.box_length,glb.xcoords,
+  enrg_nb = fenergy.energy.energy_nonbond(glb.number_of_molecules,5,glb.rcut,glb.box_length,glb.lpbc,glb.xcoords,
                      glb.ycoords,glb.zcoords,glb.nbpar_fort[0][0],glb.nbpar_fort[0][1])
   sys_energy += enrg_nb
 
@@ -51,7 +51,8 @@ def sumup():
   sys_energy += enrg_drude
 
   # Add tail correction (only O contributes to NB tail correction)
-  sys_energy += glb.utailc
+  if glb.ltailc:
+    sys_energy += glb.utailc
   
 
   ''' 

@@ -1,23 +1,26 @@
 import numpy as np
 ### General simulation information ###
-number_of_molecules = 64
-ncell = 4
-number_of_cycles = 2000
-restart = False
+number_of_molecules = 2
+ncell = 2
+number_of_cycles = 100000
+restart = True
 restart_file = "restart.xyz"
 continue_run = False
 
 # Cutoff for nonbond interactions
-rcut = 6.00 # Angstrom
+rcut = 100.00 # Angstrom
 
 # Number of electronic moves for ANES-MC
-relec = 128
+relec = 100
 
 # Unfortunately, Ewald sum doesn't seem to be working, so the qmimage subroutine is hacky
 # way of getting some results
 qtype = "mimage"
 
-iwrite = 50
+# False for free dimer
+lpbc = False
+
+iwrite = 500
 
 # Bead information
 nonbond_params = {101:[3.1589,93.2000,-1.77185],
@@ -67,9 +70,9 @@ zcoords  = np.empty((number_of_molecules,5))
 
 ### Box info ###
 # Cartesian boxlength in Angstrom (box is assumed cubic)
-box_length = 14.420
+box_length = 1000.0 #14.420
 # Temperature and reciprocal temperature in K and K^-1
-temperature = 12730
+temperature = 298.15
 beta = 1.0e0/temperature
 
 # Electronic temperature
@@ -85,3 +88,5 @@ qdrude = 1.77185  # units of e-1
 
 # Tail correction to energy (only O has LJ params, so is only contributor to nonbonded tail correction)
 utailc = (8.0e0/3.0e0)*np.pi*(number_of_molecules/box_length**3.0e0)*((1.0e0/3.0e0)*(nbpar_fort[0][0]/rcut)**9.0e0-(nbpar_fort[0][0]/rcut)**3.0e0)
+# False for dimer
+ltailc = False
