@@ -3,8 +3,8 @@ import global_params as glb
 import fenergy
 from scipy.special import erf
 
-kalp = 3.2e0/glb.rcut
-nkvec = 5
+kalp =  0.75 #3.2e0/glb.rcut
+nkvec = glb.nkvec
 
 # For converting sim units to K
 kb   = np.float64(1.3806488E-23)
@@ -55,8 +55,9 @@ def sumup():
     sys_energy += glb.utailc
   
 
-  ''' 
+  
   print("NB: {:<18.4f}".format(enrg_nb))
+  print("NBTail: {:<18.4f}".format(glb.utailc))
   print("Drude: {:<18.4f}".format(enrg_drude))
   if glb.qtype == "Ewald":
     print("qreal: {:<18.4f}".format(qreal))
@@ -68,6 +69,6 @@ def sumup():
     print("qtot: {:<18.4f}".format(qmimage))
   print("---------------------------")
   print("Total: {:<18.4f}".format(sys_energy))
-  '''
+  
 
   return sys_energy, False

@@ -15,8 +15,10 @@ def main():
   # First energy calc
   glb.box_energy,loverlap = sumup()
 
+  energy = []
+
   # Decide whether to continue run or overwrite
-  write_xyz("dimer.xyz",(not glb.continue_run))
+  write_xyz("dimer-min.xyz",(not glb.continue_run))
   # Monte Carlo!
   for cycle in range(glb.number_of_cycles):
     for step in range(glb.number_of_molecules):
@@ -27,10 +29,28 @@ def main():
       else:
         rigid_rot_move()
     if cycle%glb.iwrite == 0:
-      write_xyz("dimer.xyz",False)
+      write_xyz("dimer-min.xyz",False)
+    if cycle%glb.ienrg == 0:
+      etmp,lovr = sumup()
+      energy.append(etmp)
 
   # Overwrite last restart file
   write_xyz("restart.xyz",True)
+
+  if glb.number_of_cycles > 0:
+    with open("dimer-min.out","w") as out:
+      out.write("Simulation Information\n")
+      out.write("Number of molecules: {}\n".format(glb.number_of_molecules))
+      out.write("Temperature [K]: {}\n".format(glb.temperature))
+
+      out.write("\nForce Field Information\n")
+      out.write("Coulomb Calc. Type: {}\n".format(glb.qtype))
+      if glb.qtype == "Ewald":
+        out.write("num. k vectors: {}\n".format(glb.nkvec))
+      out.write("Tail Corrections: {}\n".format(glb.ltailc))
+
+      out.write("\nResults\n")
+      out.write("Average Energy [K]: {:<16.4f} {:<16.4f}\n".format(np.mean(energy),np.std(energy,ddof=1)))
 
 main()
 
