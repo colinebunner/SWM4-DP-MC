@@ -168,9 +168,6 @@ contains
 
     ! Set total k-space energy to 0. Set real and imaginary contributions to 0.
     eqrecip = 0.0d0
-    sumr   = 0.0d0
-    sumi   = 0.0d0
-
     vol = boxlength*boxlength*boxlength
 
     kalpsq = kalp*kalp
@@ -193,7 +190,10 @@ contains
         end if
 
         do nz = nzmin, nkvec
-          
+
+          sumr   = 0.0d0
+          sumi   = 0.0d0
+         
           kx = real(nx)*tpl
           ky = real(ny)*tpl
           kz = real(nz)*tpl
@@ -208,6 +208,8 @@ contains
               sumi = sumi + sin(arg)*qbeads(iunit)
             end do first_unit
           end do first_mol
+
+          print *, nx, ny, nz, (sumr*sumr+sumi*sumi)*prefac*qqfact
 
           eqrecip = eqrecip + (sumr*sumr+sumi*sumi)*prefac
 
