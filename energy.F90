@@ -209,8 +209,6 @@ contains
             end do first_unit
           end do first_mol
 
-          print *, nx, ny, nz, (sumr*sumr+sumi*sumi)*prefac*qqfact
-
           eqrecip = eqrecip + (sumr*sumr+sumi*sumi)*prefac
 
         end do
