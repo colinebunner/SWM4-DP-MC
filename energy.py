@@ -3,14 +3,14 @@ import global_params as glb
 import fenergy
 from scipy.special import erf
 
-kalp =  0.75 #3.2e0/glb.rcut
+kalp = glb.kalp
 nkvec = glb.nkvec
 
 # For converting sim units to K
 kb   = np.float64(1.3806488E-23)
 eps0 = np.float64(8.854187817E-12)
 eu   = np.float64(1.602176565E-19)
-qqfact = (eu**2.0e0)*1E10/(np.pi*4.0e0*eps0*kb)
+qqfact = ((eu**2.0e0)*1.0e10)/(np.pi*4.0e0*eps0*kb)
 
 # Self-interaction correction is constant in this simulation
 qself = 0.0e0
@@ -26,7 +26,7 @@ def sumup():
   # Do this first because all beads have charge, so we can use electrostatic subroutine to get loverlap
   if glb.qtype == "Ewald":
     # Electrostatic energy (real + reciprocal - self - exclude)
-    qreal,loverlap  = fenergy.energy.energy_qreal(glb.number_of_molecules,5,glb.box_length,glb.rcut,kalp,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
+    qreal,loverlap  = fenergy.energy.energy_qreal(glb.number_of_molecules,5,glb.box_length,glb.lpbc,glb.rcut,kalp,glb.xcoords,glb.ycoords,glb.zcoords,glb.qbeads)
     sys_energy += qreal
     sys_energy -= qself
     if not loverlap:
@@ -54,8 +54,6 @@ def sumup():
   if glb.ltailc:
     sys_energy += glb.utailc
   
-
-  
   print("NB: {:<18.4f}".format(enrg_nb))
   print("NBTail: {:<18.4f}".format(glb.utailc))
   print("Drude: {:<18.4f}".format(enrg_drude))
@@ -64,6 +62,7 @@ def sumup():
     print("qrecip: {:<18.4f}".format(qrecip))
     print("qself: {:<18.4f}".format(qself))
     print("qexclude: {:<18.4f}".format(qexclude))
+    print("qs+qe: {:<18.4f}".format(qself+qexclude))
     print("qtot: {:<18.4f}".format(qreal+qrecip-qself-qexclude))
   else:
     print("qtot: {:<18.4f}".format(qmimage))

@@ -18,7 +18,7 @@ def main():
   energy = []
 
   # Decide whether to continue run or overwrite
-  write_xyz("dimer-min.xyz",(not glb.continue_run))
+  write_xyz("ewald-test.xyz",(not glb.continue_run))
   # Monte Carlo!
   for cycle in range(glb.number_of_cycles):
     for step in range(glb.number_of_molecules):
@@ -29,7 +29,7 @@ def main():
       else:
         rigid_rot_move()
     if cycle%glb.iwrite == 0:
-      write_xyz("dimer-min.xyz",False)
+      write_xyz("ewald-test.xyz",False)
     if cycle%glb.ienrg == 0:
       etmp,lovr = sumup()
       energy.append(etmp)
@@ -38,7 +38,7 @@ def main():
   write_xyz("restart.xyz",True)
 
   if glb.number_of_cycles > 0:
-    with open("dimer-min.out","w") as out:
+    with open("ewald-test.out","w") as out:
       out.write("Simulation Information\n")
       out.write("Number of molecules: {}\n".format(glb.number_of_molecules))
       out.write("Temperature [K]: {}\n".format(glb.temperature))

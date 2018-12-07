@@ -95,8 +95,9 @@ contains
   end subroutine energy_drude
 
   ! Computes real-space portion of Coulomb energy
-  subroutine energy_qreal(nmol,nunit,boxlength,rcut,kalp,xcoords,ycoords,zcoords,qbeads,eqreal,lovr)
+  subroutine energy_qreal(nmol,nunit,boxlength,lpbc,rcut,kalp,xcoords,ycoords,zcoords,qbeads,eqreal,lovr)
     integer,intent(in) :: nmol, nunit
+    logical,intent(in) :: lpbc
     real*8,intent(in)  :: xcoords(:,:), ycoords(:,:), zcoords(:,:), qbeads(5),&
                          &boxlength,kalp,rcut
     real*8,intent(out) :: eqreal
@@ -128,9 +129,11 @@ contains
             ryij = ryi - ycoords(jmol,junit)
             rzij = rzi - zcoords(jmol,junit)
 
-            rxij = rxij - boxlength*nint(rxij/boxlength)
-            ryij = ryij - boxlength*nint(ryij/boxlength)
-            rzij = rzij - boxlength*nint(rzij/boxlength)
+            if (lpbc) then
+              rxij = rxij - boxlength*nint(rxij/boxlength)
+              ryij = ryij - boxlength*nint(ryij/boxlength)
+              rzij = rzij - boxlength*nint(rzij/boxlength)
+            end if
 
             rij = sqrt(rxij*rxij + ryij*ryij + rzij*rzij)
 
@@ -215,7 +218,7 @@ contains
       end do
     end do
 
-    eqrecip = eqrecip*qqfact
+    eqrecip = eqrecip*qqfact*2.0d0*3.1415926535897932
 
     return
 
@@ -254,7 +257,7 @@ contains
     return
 
   end subroutine energy_qexclude
-  
+
   ! Hedging my bets and coding a subroutine that just treats Coulomb
   ! interactions with minimum image convention
   subroutine energy_qmimage(nmol,nunit,boxlength,lpbc,xcoords,ycoords,zcoords,qbeads,eqmimage,lovr)

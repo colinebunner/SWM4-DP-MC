@@ -1,25 +1,26 @@
 import numpy as np
 ### General simulation information ###
-number_of_molecules = 2
-ncell = 2
+number_of_molecules = 216
+ncell = 6
 number_of_cycles = -1
 restart = True
 restart_file = "restart.xyz"
 continue_run = False
 
 # Cutoff for nonbond interactions
-rcut = 7.00 # Angstrom
+rcut = 9.30 # Angstrom
 
 # Number of electronic moves for ANES-MC
-relec = 50
+relec = -1
 
 # Unfortunately, Ewald sum doesn't seem to be working, so the qmimage subroutine is hacky
 # way of getting some results
 qtype = "Ewald"
-nkvec = 10
+nkvec = 7
+kalp  = 3.2/rcut
 
 # False for free dimer
-lpbc = False
+lpbc = True
 
 iwrite = 50
 ienrg  = 20
@@ -41,7 +42,8 @@ nbpar_fort = np.array(nbpar_fort)
 # Don't care I'm hardcoding this for calculating COM because 
 masses = [15.9990,1.0079,1.0079,0.0e0,0.0e0,0.0e0]
 # Ditto for Ewald sum
-qbeads = np.array([-1.77185,0.55370,0.55370,-1.10740,1.77185])
+#qbeads = np.array([-1.77185,0.55370,0.55370,-1.10740,1.77185])
+qbeads = np.array([0.0e0,0.55370,0.55370,-1.10740,0.0e0])
 
 # SWM4-DP geometry
 loh = 0.9572 # A
@@ -72,9 +74,9 @@ zcoords  = np.empty((number_of_molecules,5))
 
 ### Box info ###
 # Cartesian boxlength in Angstrom (box is assumed cubic)
-box_length = 14.000
+box_length = 18.626
 # Temperature and reciprocal temperature in K and K^-1
-temperature = 1.0e0
+temperature = 298.15e0
 beta = 1.0e0/temperature
 
 # Electronic temperature
@@ -89,6 +91,9 @@ kdrude = 503220.0 # K/A^2
 qdrude = 1.77185  # units of e-1
 
 # Tail correction to energy (only O has LJ params, so is only contributor to nonbonded tail correction)
-utailc = (8.0e0/3.0e0)*np.pi*(number_of_molecules/box_length**3.0e0)*((1.0e0/3.0e0)*(nbpar_fort[0][0]/rcut)**9.0e0-(nbpar_fort[0][0]/rcut)**3.0e0)
+sigrc  = 3.1589/rcut
+sigrc3 = sigrc*sigrc*sigrc
+sigrc9 = sigrc3*sigrc3*sigrc3
+utailc = (8.0e0/3.0e0)*np.pi*(number_of_molecules/box_length**3.0e0)*nbpar_fort[0][1]*(nbpar_fort[0][0]**3.0e0)*((1.0e0/3.0e0)*sigrc9-sigrc3)*number_of_molecules
 # False for finding dimer minimum energy
-ltailc = False
+ltailc = True
