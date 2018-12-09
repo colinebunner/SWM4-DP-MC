@@ -1,27 +1,45 @@
 import numpy as np
 ### General simulation information ###
-number_of_molecules = 216
-ncell = 6
-number_of_cycles = -1
-restart = True
+number_of_molecules = 64
+ncell = 4
+number_of_cycles = 50
+restart = False
 restart_file = "restart.xyz"
 continue_run = False
+# False for free dimer
+lpbc = True
 
+### Move type probabilities ###
+trans_prob            = 0.500
+rot_prob              = 1.000
+
+### Max displacement stuff ###
+trans_max_displ   = 0.4  # Angstrom
+rot_max_displ     = 0.7  # Radians
+drude_max_displ   = 0.04 # Angstrom
+
+### Box info ###
+# Cartesian boxlength in Angstrom (box is assumed cubic)
+box_length = 12.417
+# Temperature and reciprocal temperature in K and K^-1
+temperature = 298.15e0
+beta = 1.0e0/temperature
 # Cutoff for nonbond interactions
 rcut = 9.30 # Angstrom
 
+### ANES-MC stuff ###
+# Electronic temperature
+temp_elec = 5.0e0 # K
+beta_elec = np.float64(1.0e0/temp_elec)
 # Number of electronic moves for ANES-MC
-relec = -1
+relec = 50
 
-# Unfortunately, Ewald sum doesn't seem to be working, so the qmimage subroutine is hacky
-# way of getting some results
+# Ewald sum stuff [definitely works now]
 qtype = "Ewald"
 nkvec = 7
 kalp  = 3.2/rcut
 
-# False for free dimer
-lpbc = True
-
+# Output info
 iwrite = 50
 ienrg  = 20
 
@@ -57,14 +75,6 @@ swm4dp_geom = np.array([[0.0e0,0.0e0,0.0e0],
                         [0.0e0,0.23808e0,0.0e0],
                         [0.0e0,0.0e0,0.0e0]])
 
-### Move type probabilities ###
-trans_prob            = 0.500
-rot_prob              = 1.000
-
-### Max displacement stuff ###
-trans_max_displ   = 0.4  # Angstrom
-rot_max_displ     = 0.7  # Radians
-drude_max_displ   = 0.04 # Angstrom
 
 ### Information on each chain/unit ###
 xcoords  = np.empty((number_of_molecules,5)) # 1st index is the molecule number, 
@@ -72,19 +82,9 @@ xcoords  = np.empty((number_of_molecules,5)) # 1st index is the molecule number,
 ycoords  = np.empty((number_of_molecules,5))
 zcoords  = np.empty((number_of_molecules,5))
 
-### Box info ###
-# Cartesian boxlength in Angstrom (box is assumed cubic)
-box_length = 18.626
-# Temperature and reciprocal temperature in K and K^-1
-temperature = 298.15e0
-beta = 1.0e0/temperature
-
-# Electronic temperature
-temp_elec = 5.0e0 # K
-beta_elec = np.float64(1.0e0/temp_elec)
-
 # Total energy of simulation box
 box_energy = 0.0e0
+energy_nokspace = 0.0e0
 
 # Drude oscillator is tethered to the oxygen atom, which is bead 1, by a spring with the following force constant
 kdrude = 503220.0 # K/A^2

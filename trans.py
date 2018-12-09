@@ -4,8 +4,12 @@ import energy
 
 def trans_move():
 
+  # Will return 0 if translation move is rejected, 1 if accepted
+  trans_accept = 0
+
   # Store old energy for accepting/rejecting composite ANES translation move
   energy_store = glb.box_energy
+  energy_nok_store = glb.energy_nokspace
 
   # Pick random molecule for translation
   trial_chain = int(np.floor(np.random.random()*glb.number_of_molecules))
@@ -25,8 +29,7 @@ def trans_move():
     glb.xcoords[trial_chain][i] += dx_nuc
     glb.ycoords[trial_chain][i] += dy_nuc
     glb.zcoords[trial_chain][i] += dz_nuc
-
-  ''' 
+  
   xcom = 0.0e0
   ycom = 0.0e0
   zcom = 0.0e0
@@ -41,12 +44,6 @@ def trans_move():
   xcom = xcom/18.01528
   ycom = ycom/18.01528
   zcom = zcom/18.01528
-  '''
-
-  # Try O coords right now
-  xcom = glb.xcoords[trial_chain][0]
-  ycom = glb.ycoords[trial_chain][0]
-  zcom = glb.zcoords[trial_chain][0]
 
   # Wrap if translation moves COM out of box in a direction. We won't let the
   # maximum translation get greater than half the box length, so we shouldn't
@@ -74,9 +71,11 @@ def trans_move():
     wrap_z_minus= True
   
   # Don't want to recompute energy of old configuration every electronic move. Just update
-  # when the move is accepted.
-  energy_elec, loverlap = energy.sumup()
-
+  # when the move is accepted. Also, electronic moves are being performed with nested Markov
+  # chain with modified potential in which the potential doesn't include k-space term.
+  energy_elec_nok, loverlap = energy.sumup(lrecip=False)
+  energy_elec_nok_store = energy_elec_nok
+  energy_elec_full, loverlap = energy.sumup(lrecip=True)
 
   # Kill move on hard-sphere overlap
   if loverlap:
@@ -85,44 +84,62 @@ def trans_move():
     glb.zcoords = zstore
 
   else:
-    # Relec electronic moves. Pick a random drude oscillator to move.
-    for em in range(glb.relec):
-      trial_el = int(np.floor(np.random.random()*glb.number_of_molecules))
-      # Electronic move will be simple cartesian displacement of Drude oscillators
-      dx_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
-      dy_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
-      dz_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
 
-      glb.xcoords[trial_chain][4] += dx_elec
-      glb.ycoords[trial_chain][4] += dy_elec
-      glb.zcoords[trial_chain][4] += dz_elec
+    # I don't think that the configurations will be too different if I ignore the k-space term in the Ewald sum, and so we will sample the
+    # Drude positions with the scheme of Gelb [J. Chem. Phys. 118, 7747].
+    nested_accept = False
+    nestedx_store = np.copy(glb.xcoords)
+    nestedy_store = np.copy(glb.ycoords)
+    nestedz_store = np.copy(glb.zcoords)
+    while not nested_accept:
+      # Relec electronic moves. Pick a random drude oscillator to move.
+      for em in range(glb.relec):
+        trial_el = int(np.floor(np.random.random()*glb.number_of_molecules))
+        # Electronic move will be simple cartesian displacement of Drude oscillators
+        dx_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
+        dy_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
+        dz_elec = (np.random.random()-0.5e0)*glb.drude_max_displ
 
-      xd = glb.xcoords[trial_chain][4] - glb.xcoords[trial_chain][0]
-      yd = glb.ycoords[trial_chain][4] - glb.ycoords[trial_chain][0]
-      zd = glb.zcoords[trial_chain][4] - glb.zcoords[trial_chain][0]
-      drudeDist = xd*xd + yd*yd + zd*zd
+        glb.xcoords[trial_chain][4] += dx_elec
+        glb.ycoords[trial_chain][4] += dy_elec
+        glb.zcoords[trial_chain][4] += dz_elec
 
-      if drudeDist > 0.04e0:
-        glb.xcoords[trial_chain][4] -= dx_elec
-        glb.ycoords[trial_chain][4] -= dy_elec
-        glb.zcoords[trial_chain][4] -= dz_elec
+        xd = glb.xcoords[trial_chain][4] - glb.xcoords[trial_chain][0]
+        yd = glb.ycoords[trial_chain][4] - glb.ycoords[trial_chain][0]
+        zd = glb.zcoords[trial_chain][4] - glb.zcoords[trial_chain][0]
+        drudeDist = xd*xd + yd*yd + zd*zd
 
-
-      else:
-        energy_new, loverlap = energy.sumup()
-  
-        # Accept electronic move
-        if np.random.random() < np.exp(-1.0*glb.beta_elec*(energy_new-energy_elec)):
-          energy_elec = energy_new
-        # Reject electronic move
-        else:
+        # Hard cutoff of 0.2 A on Drude displacements
+        if drudeDist > 0.04e0:
           glb.xcoords[trial_chain][4] -= dx_elec
           glb.ycoords[trial_chain][4] -= dy_elec
           glb.zcoords[trial_chain][4] -= dz_elec
-     
+
+        else:
+          energy_new, loverlap = energy.sumup(lrecip=False)
+  
+          # Accept electronic move
+          if np.random.random() < np.exp(-1.0*glb.beta_elec*(energy_new-energy_elec_nok)):
+            energy_elec_nok = energy_new
+          # Reject electronic move
+          else:
+            glb.xcoords[trial_chain][4] -= dx_elec
+            glb.ycoords[trial_chain][4] -= dy_elec
+            glb.zcoords[trial_chain][4] -= dz_elec
+
+      # Accept/reject nested electronic move Markov chain
+      energy_new_full, loverlap = energy.sumup(lrecip=True)
+      deleprimed = energy_elec_nok-energy_elec_nok_store
+      deletotal  = energy_new_full-energy_elec_full
+      if np.random.random() < np.exp(-1.0*glb.beta_elec*(deletotal-deleprimed)):
+        nested_accept = True
+
     # Accept composite move. Final energy_elec should be energy of system after all moves made.
-    if np.random.random() < np.exp(-1.0e0*glb.beta*(energy_elec-energy_store)):
-      glb.box_energy = energy_elec
+    if np.random.random() < np.exp(-1.0e0*glb.beta*(energy_new_full-energy_store)):
+      trans_accept += 1
+      glb.box_energy = energy_new_full
+      glb.energy_nokspace = energy_elec_nok
+
       # Wrap coordinates if trial move takes molecule outside of the box
       if wrap_x_plus:
         for iunit in range(5):
@@ -150,3 +167,5 @@ def trans_move():
       glb.ycoords = ystore
       glb.zcoords = zstore
 
+
+    return trans_accept

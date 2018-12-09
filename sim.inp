@@ -1,0 +1,310 @@
+def read_inp(fname):
+
+  # First read section 'Simulation_Parameters'
+  with open(fname,"r") as f:
+    f_list = [line.strip() for line in f.readlines()]
+    for i,line in enumerate(f_list):
+       if line.strip().startswith("SECTION SIMULATION_PARAMETERS"):
+         continue_section = True
+         section_counter = 0
+         while continue_section:
+           next_line = f_list[i+section_counter+1]
+           if next_line.startswith("ensemble"):
+             glb.ensemble = next_line.split()[-1]
+           elif next_line.startswith("number_of_boxes"):
+             glb.number_of_boxes = int(next_line.split()[-1])
+           elif next_line.startswith("number_of_moltypes"):
+             glb.number_of_moltypes = int(next_line.split()[-1])
+           elif next_line.startswith("number_of_molecules"):
+             glb.number_of_molecules = int(next_line.split()[-1])
+           elif next_line.startswith("restart"):
+             rs = next_line.split()[-1]
+             if rs in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+               glb.restart = True
+             else:
+               glb.restart = False
+           elif next_line.startswith("parameter_file"):
+             glb.restart_file = line.split()[-1]
+           elif next_line.startswith("END SECTION SIMULATION_PARAMETERS"):
+             continue_section = False
+           else:
+             print("SHIT GODDAMIT")
+
+           # Should fail after 7, but either way, don't let infinite loop happen
+           if section_counter > 100:
+             print("SHIT HOLYHELL")
+           
+           section_counter += 1
+
+  # Read section 'PBC'
+  with open(fname,"r") as f:
+    f_list = [line.strip() for line in f.readlines()]
+    for i,line in enumerate(f_list): 
+      if line.strip().startswith("SECTION PBC"):
+         continue_section = True
+         section_counter = 0
+         while continue_section:
+           next_line = f_list[i+section_counter+1]
+           if next_line.startswith("pbc") and len(next_line.split()[0])==3:
+             pb = next_line.split()[-1]
+             if pb in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+               glb.pbc = True
+             else:
+               glb.pbc = False
+           elif next_line.startswith("pbcx"):
+             pb = next_line.split()[-1]
+             if pb in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+               glb.pbcx = True
+             else:
+               glb.pbcx = False
+           elif next_line.startswith("pbcy"):
+             pb = next_line.split()[-1]
+             if pb in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+               glb.pbcy = True
+             else:
+               glb.pbcy = False
+           elif next_line.startswith("pbcz"):
+             pb = next_line.split()[-1]
+             if pb in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+               glb.pbcz = True
+             else:
+               glb.pbcz = False
+           elif next_line.startswith("END SECTION PBC"):
+             continue_section = False
+           else:
+             print("SHIT GODDAMIT")
+
+           # Should fail after 7, but either way, don't let infinite loop happen
+           if section_counter > 100:
+             print("SHIT HOLYHELL")
+           
+           section_counter += 1
+
+  # Read section 'MOVE_PROBS'
+  with open(fname,"r") as f:
+    f_list = [line.strip() for line in f.readlines()]
+    for i,line in enumerate(f_list):
+       if line.strip().startswith("SECTION MOVE_PROBS"):
+
+         continue_section = True
+         section_counter = 0
+
+         while continue_section:
+           next_line = f_list[i+section_counter+1]
+           if next_line.startswith("trans_prob"):
+             nlsplit = next_line.split()
+             if nlsplit[0] == "trans_prob_molty":
+               cumulative_molty_prob = 0.0
+               for mt in range(glb.number_of_moltypes):
+                 glb.trans_prob_molty.append(float(nlsplit[1+mt]))
+                 cumulative_molty_prob += glb.trans_prob_molty[mt]
+               if (not np.isclose(cumulative_molty_prob,1.0e0)):
+                 print("OH NO NO NO!")
+             else:
+               glb.trans_prob = float(nlsplit[-1])
+
+           elif next_line.startswith("rot_prob"):
+             nlsplit = next_line.split()
+             if nlsplit[0] == "rot_prob_molty":
+               cumulative_molty_prob = 0.0
+               for mt in range(glb.number_of_moltypes):
+                 glb.rot_prob_molty.append(float(nlsplit[1+mt]))
+                 cumulative_molty_prob += glb.rot_prob_molty[mt]
+               if (not np.isclose(cumulative_molty_prob,1.0e0)):
+                 print("OH NO NO NO!")
+             else:
+               glb.rot_prob = float(nlsplit[-1])
+
+           elif next_line.startswith("volume_prob"):
+             nlsplit = next_line.split()
+             if nlsplit[0] == "volume_prob_box":
+               cumulative_box_prob = 0.0
+               for b in range(glb.number_of_boxes):
+                 glb.volume_prob_box.append(float(nlsplit[1+b]))
+                 cumulative_box_prob += glb.volume_prob_box[b]
+               if (not np.isclose(cumulative_box_prob,1.0e0)):
+                 print("OH NO NO NO!")
+             else:
+               glb.volume_prob = float(nlsplit[-1])
+
+           elif next_line.startswith("swap_prob"):
+             nlsplit = next_line.split()
+             if nlsplit[0] == "swap_prob_molty":
+               cumulative_molty_prob = 0.0
+               for mt in range(glb.number_of_moltypes):
+                 glb.swap_prob_molty.append(float(nlsplit[1+mt]))
+                 cumulative_molty_prob += glb.swap_prob_molty[mt]
+               if (not np.isclose(cumulative_molty_prob,1.0e0)):
+                 print("OH NO NO NO!")
+             else:
+               glb.swap_prob = float(nlsplit[-1])
+
+           elif next_line.startswith("conf_bias_prob"):
+             nlsplit = next_line.split()
+             if nlsplit[0] == "conf_bias_prob_molty":
+               cumulative_molty_prob = 0.0
+               for mt in range(glb.number_of_moltypes):
+                 glb.conf_bias_prob_molty.append(float(nlsplit[1+mt]))
+                 cumulative_molty_prob += glb.conf_bias_prob_molty[mt]
+               if (not np.isclose(cumulative_molty_prob,1.0e0)):
+                 print("OH NO NO NO!")
+             else:
+               glb.conf_bias_prob = float(nlsplit[-1])
+
+           elif next_line.startswith("END SECTION MOVE_PROBS"):
+             continue_section = False
+
+           else: print("SHIT GODDAMIT")
+
+           # Should fail after 7, but either way, don't let infinite loop happen
+           if section_counter > 100:
+             print("SHIT HOLYHELL")
+             continue_section = False
+
+           section_counter += 1
+
+         cumulative_move_prob = glb.trans_prob + glb.rot_prob + glb.volume_prob + glb.swap_prob + glb.conf_bias_prob
+         if ( not np.isclose(cumulative_move_prob,1.0) ):
+           print("OH NO OH NO OH NO")
+         
+           
+  # Read section 'MAX_DISPLS'
+  with open(fname,"r") as f:
+    f_list = [line.strip() for line in f.readlines()]
+    for i,line in enumerate(f_list):
+       if line.strip().startswith("SECTION MAX_DISPLS"):
+
+         continue_section = True
+         section_counter = 0
+
+         while continue_section:
+           next_line = f_list[i+section_counter+1]
+           if next_line.strip().startswith("opt_trans_displs"):
+             ot = next_line.split()[-1]
+             if ot in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+               glb.opt_trans_displs = True
+             else:
+               glb.opt_trans_displs = False
+            
+           elif next_line.strip().startswith("opt_rot_displs"):
+             ot = next_line.split()[-1]
+             if ot in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+               glb.opt_rot_displs = True
+             else:
+               glb.opt_rot_displs = False
+
+           elif next_line.strip().startswith("opt_vol_displs"):
+             ot = next_line.split()[-1]
+             if ot in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+               glb.opt_vol_displs = True
+             else:
+               glb.opt_vol_displs = False
+
+           elif next_line.strip().startswith("trans_max_displs"):
+             for mt in range(glb.number_of_moltypes):
+               glb.trans_max_displs.append(float(next_line.strip().split()[1+mt]))
+ 
+           elif next_line.strip().startswith("rot_max_displs"):
+             for mt in range(glb.number_of_moltypes):
+               glb.rot_max_displs.append(float(next_line.strip().split()[1+mt]))
+
+           elif next_line.strip().startswith("vol_max_displs"):
+             for b in range(glb.number_of_boxes):
+               glb.vol_max_displs.append(float(next_line.strip().split()[1+b]))
+
+           elif next_line.startswith("END SECTION MAX_DISPLS"):
+             continue_section = False
+
+           else:
+             print("BAD JUST Bad codein go 2 BEd")
+
+           section_counter += 1
+
+           if section_counter > 100:
+             print("Yeezus")
+
+  # Read section 'SUPPLEMENTARY_INPUTS'
+  with open(fname,"r") as f:
+    f_list = [line.strip() for line in f.readlines()]
+    for i,line in enumerate(f_list):
+       if line.strip().startswith("SECTION SUPPLEMENTARY_INPUTS"):
+
+         continue_section = True
+         section_counter = 0
+
+         while continue_section:
+           next_line = f_list[i+section_counter+1]
+
+           if next_line.startswith("box_file_names"):
+             for b in range(glb.number_of_boxes):
+               glb.box_file_names.append(next_line.split()[1+b])
+
+           elif next_line.startswith("molecule_file_names"):
+             for mt in range(glb.number_of_moltypes):
+               glb.molecule_file_names.append(next_line.split()[1+mt])
+
+           elif next_line.startswith("END SECTION SUPPLEMENTARY_INPUTS"):
+             continue_section = False
+
+           else:
+             print("BAD JUST Bad codein go 2 BEd")
+
+           section_counter += 1
+
+           if section_counter > 100:
+             print("How did you not hit an EOF, bro?")
+
+  # Read section 'ELECTROSTATICS'
+  with open(fname,"r") as f:
+    f_list = [line.strip() for line in f.readlines()]
+    for i,line in enumerate(f_list):
+       if line.strip().startswith("SECTION ELECTROSTATICS"):
+
+         continue_section = True
+         section_counter = 0
+
+         while continue_section:
+
+           next_line = f_list[i+section_counter+1]
+
+           if next_line.startswith("ewald_type"):
+             glb.ewald_type = next_line.split()[-1]
+           
+           elif next_line.startswith("auto_ewald_par"):
+             for b in range(glb.number_of_boxes):
+               ae = next_line.split()[1+b]
+               if ae in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+                 glb.auto_ewald_par.append(True)
+               else:
+                 glb.auto_ewald_par.append(False)
+
+           elif next_line.startswith("ewald_conv_par"):
+             for b in range(glb.number_of_boxes):
+               cp = next_line.split()[1+b]
+               if cp in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+                 glb.ewald_conv_par.append(True)
+               else:
+                 glb.ewald_conv_par.append(False)
+
+           elif next_line.startswith("increase_cut_after"):
+             for b in range(glb.number_of_boxes):
+               ca = next_line.split()[1+b]
+               if ca in ["TRUE","True","TRue","TRUe","true","t","T",".t.",".T."]:
+                 glb.increase_cut_after.append(True)
+               else:
+                 glb.increase_cut_after.append(False)
+
+           elif next_line.startswith("percent_cut_after"):
+             for b in range(glb.number_of_boxes):
+               glb.percent_cut_after.append(float(next_line.split()[1+b]))
+
+           elif next_line.startswith("END SECTION ELECTROSTATICS"):
+             continue_section = False
+
+           else:
+             print("Why didn't that cat come say hi to me?")
+            
+           section_counter += 1
+   
+           if section_counter > 100:
+             print("How did you not hit an EOF, bro?")
